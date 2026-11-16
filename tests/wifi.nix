@@ -7,7 +7,7 @@
     boot.extraModprobeConfig = "options mac80211_hwsim radios=2";
     networking.usePredictableInterfaceNames = false;
     # QEMU's NixOS module disables wireless by default; NM needs its supplicant.
-    networking.wireless.enable = lib.mkForce true;
+    networking.wireless.enable = lib.mkOverride 0 true;
     networking.networkmanager.unmanaged = [ "interface-name:wlan0" "interface-name:eth*" ];
     networking.networkmanager.settings.main.no-auto-default = "*";
     piBootstrap.wifi = {
