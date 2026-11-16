@@ -31,7 +31,14 @@ let cfg = config.piBootstrap; in {
     };
     networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 22 ];
     users.users.root.openssh.authorizedKeys.keys = cfg.authorizedKeys;
-  } (lib.mkIf cfg.wifi.enable {
+  } (lib.mkIf (cfg.tailscale.authKeyFile != null) {
+    # The phone may be absent at boot. Keep enrollment retrying until it returns.
+    systemd.services.tailscaled-autoconnect.serviceConfig = {
+      Restart = "on-failure";
+      RestartSec = "15s";
+      TimeoutStartSec = "60s";
+    };
+  }) (lib.mkIf cfg.wifi.enable {
     networking.networkmanager = {
       enable = true;
       ensureProfiles.environmentFiles = [ cfg.wifi.environmentFile ];
