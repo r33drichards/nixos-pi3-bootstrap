@@ -3,6 +3,9 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -24,10 +27,14 @@ jobs:
           extra_nix_config: |
             system-features = nixos-test benchmark big-parallel kvm
       - name: Run VM integration test
-        run: nix build -L --show-trace .#checks.x86_64-linux.${{ matrix.test }}
+        run: |
+          set -o pipefail
+          nix build -L --show-trace .#checks.x86_64-linux.${{ matrix.test }} 2>&1 | tee "$RUNNER_TEMP/test.log"
       - name: Preserve test report
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.test }}
-          path: result/
+          path: |
+            ${{ runner.temp }}/test.log
+            result/
