@@ -1,0 +1,4 @@
+result*
+secrets/
+*.img
+*.img.zst
