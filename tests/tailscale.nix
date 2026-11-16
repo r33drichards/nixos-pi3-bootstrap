@@ -10,6 +10,12 @@ in {
   nodes = upstream.nodes // {
     peer1 = { ... }: {
       imports = [ upstream.nodes.peer1 ../modules/bootstrap.nix ];
+      piBootstrap.tailscale = {
+        authKeyFile = "/run/test-tailscale-authkey";
+        extraUpFlags = [ "--login-server=https://headscale" ];
+      };
+      # Provision the disposable key before starting the production enrollment unit.
+      systemd.services.tailscaled-autoconnect.wantedBy = lib.mkForce [];
       # Test-only fixture, never a real private key.
       users.users.root.openssh.authorizedKeys.keyFiles = [ "${key}/id_ed25519.pub" ];
     };
@@ -18,12 +24,17 @@ in {
       environment.systemPackages = [ pkgs.openssh ];
     };
   };
-  testScript = upstream.testScript + ''
+  testScript = (builtins.replaceStrings [ "peer1.execute(up_cmd)" ] [ ''
+      import shlex
+      peer1.succeed("umask 077; printf %s " + shlex.quote(authkey.strip()) + " > /run/test-tailscale-authkey")
+      peer1.succeed("systemctl start tailscaled-autoconnect")
+      peer1.wait_for_unit("tailscaled-autoconnect.service")
+    '' ] upstream.testScript) + ''
     import json
     peer1.wait_for_unit("sshd.service")
     ip = peer1.succeed("tailscale ip -4").strip()
     peer2.succeed("install -m600 ${key}/id_ed25519 /root/test-key")
-    ssh = f"ssh -i /root/test-key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=5 root@{ip}"
+    ssh = f"ssh -i /root/test-key -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=5 root@{ip}"
     with subtest("OpenSSH key login works through Tailscale"):
         assert peer2.wait_until_succeeds(ssh + " 'echo tailnet-ssh-ok'").strip() == "tailnet-ssh-ok"
     with subtest("Enrollment survives tailscaled restart"):
