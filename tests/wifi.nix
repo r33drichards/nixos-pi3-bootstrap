@@ -65,8 +65,9 @@
         machine.succeed("systemctl start hostapd")
         machine.wait_until_succeeds(connected, timeout=120)
         machine.wait_until_succeeds(address, timeout=120)
-    with subtest("Saved profile survives reboot without a manual connect command"):
-        machine.reboot()
+    with subtest("Saved profile survives a power cycle without a manual connect command"):
+        machine.shutdown()
+        machine.start()
         machine.wait_until_succeeds("nmcli -g connection.id connection show phone-hotspot | grep -Fx phone-hotspot")
         machine.succeed("systemctl start hostapd")
         machine.wait_until_succeeds(connected, timeout=120)

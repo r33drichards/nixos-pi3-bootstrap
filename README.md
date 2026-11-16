@@ -9,7 +9,7 @@ nix build -L .#checks.x86_64-linux.wifi-autoconnect
 nix build -L .#checks.x86_64-linux.tailscale-ssh
 ```
 
-GitHub Actions runs both tests with KVM. The Wi-Fi test uses two mac80211_hwsim radios in one VM: a WPA2 access point with DHCP and a NetworkManager client. It checks boot without the hotspot, automatic association and DHCP when it appears, recovery after disappearance, and connection after reboot. No `nmcli connect` command is used.
+GitHub Actions runs both tests with KVM. The Wi-Fi test uses two mac80211_hwsim radios in one VM: a WPA2 access point with DHCP and a NetworkManager client. It checks boot without the hotspot, automatic association and DHCP when it appears, recovery after disappearance, and connection after a power cycle. No `nmcli connect` command is used.
 
 The VPN test uses a disposable local Headscale server and two Tailscale clients. It checks enrollment, SSH over the VPN with a generated test-only key, and identity persistence across daemon restart. It never contacts a production tailnet.
 
