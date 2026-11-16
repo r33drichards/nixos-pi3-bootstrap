@@ -47,7 +47,7 @@
   testScript = ''
     start_all()
     machine.wait_for_unit("NetworkManager.service")
-    machine.wait_for_unit("NetworkManager-ensure-profiles.service")
+    machine.wait_until_succeeds("nmcli -g connection.id connection show phone-hotspot | grep -Fx phone-hotspot")
     machine.wait_until_succeeds("ip link show wlan1")
     connected = "iw dev wlan1 link | grep -F 'SSID: Test iPhone'"
     address = "ip -4 addr show wlan1 | grep -E 'inet 192[.]168[.]50[.](1[0-9]|[2-4][0-9]|50)/24'"
@@ -65,7 +65,7 @@
         machine.wait_until_succeeds(address, timeout=120)
     with subtest("Saved profile survives reboot without a manual connect command"):
         machine.reboot()
-        machine.wait_for_unit("NetworkManager-ensure-profiles.service")
+        machine.wait_until_succeeds("nmcli -g connection.id connection show phone-hotspot | grep -Fx phone-hotspot")
         machine.succeed("systemctl start hostapd")
         machine.wait_until_succeeds(connected, timeout=120)
         machine.wait_until_succeeds(address, timeout=120)

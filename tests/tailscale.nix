@@ -28,7 +28,7 @@ in {
       import shlex
       peer1.succeed("umask 077; printf %s " + shlex.quote(authkey.strip()) + " > /run/test-tailscale-authkey")
       peer1.succeed("systemctl start tailscaled-autoconnect")
-      peer1.wait_for_unit("tailscaled-autoconnect.service")
+      peer1.wait_until_succeeds("tailscale ip -4")
     '' ] upstream.testScript) + ''
     import json
     peer1.wait_for_unit("sshd.service")
